@@ -1,7 +1,6 @@
 import pygame
 import random
 import math
-import haggis
 from sys import exit
 
 height = 1900
