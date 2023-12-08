@@ -20,6 +20,7 @@ framerate = 150
 class car:
     pos = [300, 300]
     size = [215, 90]
+    velocity = [0, 0]
     R = 46
     G = 21
     B = 71
