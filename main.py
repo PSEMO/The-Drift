@@ -1,7 +1,6 @@
 import pygame
 import random
 import math
-import haggis
 from sys import exit
 
 height = 1900
@@ -18,8 +17,15 @@ clock = pygame.time.Clock()
 framerate = 150
 
 #---------------------------------
-
+class car:
+    pos = [300, 300]
+    size = [215, 90]
+    R = 46
+    G = 21
+    B = 71
 #---------------------------------
+
+Car = car()
 
 #Update()
 while 1:
@@ -35,5 +41,7 @@ while 1:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+    
+    pygame.draw.rect(screen, (Car.R, Car.G, Car.B), (Car.pos, Car.size))
     
     pygame.display.flip()
