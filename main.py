@@ -4,8 +4,8 @@ import math
 import numpy as np
 from sys import exit
 
-height = 1900
-width = 1030
+height = 800
+width = 600
 
 pygame.init()
 pygame.mixer.init()
@@ -15,19 +15,20 @@ pygame.display.set_caption("The Drift")
 
 clock = pygame.time.Clock()
 
-framerate = 150
+framerate = 30
 
 #---------------------------------
 class car:
     pos = [300, 300]
     size = [54, 22]
     CurrentVelocity = 0
-    MaxVelocity = 10
+    MaxVelocity = 2.5
+    MovingDegree = 0
     Degree = 0
     #Constant variables
     MaxRotation = 1
-    Drag = 0.00025
-    Acceleration = 0.0005
+    Acceleration = 0.0001
+    Drag = 0.00005
     R = 46
     G = 21
     B = 71
@@ -79,70 +80,95 @@ def draw_rectangle(x, y, width, height, color, rotation=0):
 
     pygame.draw.polygon(screen, color, points)
 #---------------------------------
+def Similarity(n1, n2):
+    """ calculates a similarity score between 2 numbers """
+    if n1 + n2 == 0:
+        return 1
+    else:
+        return 1 - abs(n1 - n2) / (n1 + n2)
+#---------------------------------
 
 Car = car()
+asd = 0
 
 #Update()
 while 1:
+
     #count the time frame took and assign it to ms
     ms = clock.tick(framerate)
     deltaTime = ms * 10
+    #------------
 
     #resets screen
     screen.fill((100, 100, 100))
+    #------------
 
     #detect events including inputs
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+    #------------
 
     # get the user input
     keys = pygame.key.get_pressed()
-    # set the car acceleration and angular velocity based on the keys
+    #------------
+
+    #apply car acceleration
     if keys[pygame.K_UP]:
-        if car.CurrentVelocity > 0:
-            car.CurrentVelocity += car.Acceleration * deltaTime
-            if car.CurrentVelocity > car.MaxVelocity:
-                car.CurrentVelocity = car.MaxVelocity
+        if Car.CurrentVelocity > 0:
+            Car.CurrentVelocity += Car.Acceleration * deltaTime
+            if Car.CurrentVelocity > Car.MaxVelocity:
+                Car.CurrentVelocity = Car.MaxVelocity
         else:
-            car.CurrentVelocity += 1.5 * car.Acceleration * deltaTime
+            Car.CurrentVelocity += 1.5 * Car.Acceleration * deltaTime
     elif keys[pygame.K_DOWN]:
-        if car.CurrentVelocity < 0:
-            car.CurrentVelocity -= car.Acceleration * deltaTime
-            if car.CurrentVelocity < -car.MaxVelocity:
-                car.CurrentVelocity = -car.MaxVelocity
+        if Car.CurrentVelocity < 0:
+            Car.CurrentVelocity -= Car.Acceleration * deltaTime
+            if Car.CurrentVelocity < -Car.MaxVelocity:
+                Car.CurrentVelocity = -Car.MaxVelocity
         else:
-            car.CurrentVelocity -= 1.5 * car.Acceleration * deltaTime
+            Car.CurrentVelocity -= 1.5 * Car.Acceleration * deltaTime
+    #------------
 
-    if car.CurrentVelocity > car.Drag * 2:
-        car.CurrentVelocity -= car.Drag * deltaTime
-    elif car.CurrentVelocity < -car.Drag * 2:
-        car.CurrentVelocity += car.Drag * deltaTime
+    #apply drag
+    if Car.CurrentVelocity > Car.Drag * 2:
+        Car.CurrentVelocity -= Car.Drag * deltaTime
+    elif Car.CurrentVelocity < -Car.Drag * 2:
+        Car.CurrentVelocity += Car.Drag * deltaTime
     else:
-        car.CurrentVelocity = 0
+        Car.CurrentVelocity = 0
+    #------------
 
+    #decide rotation speed according to current and max velocity
     rotationMultiplier = 0
-    if car.CurrentVelocity > car.MaxVelocity / 2:
-        rotationMultiplier = (car.MaxVelocity - car.CurrentVelocity) / (car.MaxVelocity / 2)
-        if rotationMultiplier < 0.3:
-            rotationMultiplier = 0.3
+    if Car.CurrentVelocity > Car.MaxVelocity / 3:
+        rotationMultiplier = (Car.MaxVelocity - Car.CurrentVelocity) / (Car.MaxVelocity / 2)
+        if rotationMultiplier < 0.45:
+            rotationMultiplier = 0.45
     else:
-        rotationMultiplier = car.CurrentVelocity / (car.MaxVelocity / 2)
-    
-    if keys[pygame.K_LEFT]:
-        car.Degree += -car.MaxRotation * rotationMultiplier
-    elif keys[pygame.K_RIGHT]:
-        car.Degree += car.MaxRotation * rotationMultiplier
-    else:
-        car.CurrentRotation = 0
+        rotationMultiplier = Car.CurrentVelocity / (Car.MaxVelocity / 3)
+    #------------
 
-    car.Degree %= 360
-    _carDegree = math.radians(car.Degree)
-    car.pos[0] += degree_to_position(car.Degree)[0] * car.CurrentVelocity
-    car.pos[1] += degree_to_position(car.Degree)[1] * car.CurrentVelocity
+    #rotate the car
+    Car.Degree %= 360
+    Car.MovingDegree %= 360
+
+    if keys[pygame.K_LEFT]:
+        Car.Degree += -Car.MaxRotation * rotationMultiplier
+        if Car.Degree < 0:
+            Car.Degree += 360
+    elif keys[pygame.K_RIGHT]:
+        Car.Degree += Car.MaxRotation * rotationMultiplier
+        
+    Car.MovingDegree = Car.Degree
+    #------------
+
+    Car.pos[0] += degree_to_position(Car.MovingDegree)[0] * Car.CurrentVelocity
+    Car.pos[1] += degree_to_position(Car.MovingDegree)[1] * Car.CurrentVelocity
     
     # create polygon (a rectangle)
-    draw_rectangle(Car.pos[0], Car.pos[1], Car.size[0], Car.size[1], (Car.R, Car.G, Car.B), car.Degree)
+    draw_rectangle(Car.pos[0], Car.pos[1], Car.size[0], Car.size[1], (Car.R, Car.G, Car.B), Car.Degree)
+    draw_rectangle(Car.pos[0], Car.pos[1], Car.size[0] * 1.5, Car.size[1] / 4, (50, 50, 200), Car.MovingDegree)
     
     pygame.display.flip()
